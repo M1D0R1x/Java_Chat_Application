@@ -17,8 +17,9 @@ This is a simple Java-based chat application that allows **two users** to connec
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/veera21030/JavaChatApp.git
-   cd JavaChatApp
+   git clone https://github.com/M1D0R1x/Java_Chat_Application.git
+   cd Java_Chat_Application
+   ```
 2. **Run the Server**:
 
    First, you need to run the Server.java file to start the chat server. This can be done in an IDE or via the terminal.
