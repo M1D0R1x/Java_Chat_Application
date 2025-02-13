@@ -4,9 +4,7 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -20,6 +18,7 @@ public class Server extends JFrame {
     Socket socket;
     BufferedReader br;
     PrintWriter out;
+    FileWriter fileWriter;
 
     private JLabel heading = new JLabel("Server Area");
     private  JTextArea messageArea = new JTextArea();
@@ -35,22 +34,20 @@ public class Server extends JFrame {
             System.out.println("Server is ready to accept connection");
             System.out.println("Waiting...");
             socket = server.accept();
-
-
+            System.out.println("Connection Done");
             br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
+            fileWriter = new FileWriter("server_history.txt", true); // append mode
             out = new PrintWriter(socket.getOutputStream());
 
             createGUI();
             handleEvents();
             startReading();
+            loadChatHistory();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
-
 
     private void handleEvents() {
 
@@ -70,10 +67,20 @@ public class Server extends JFrame {
                 if (e.getKeyCode() == 10) {
                     String contentToSend = messageInput.getText();
                     messageArea.append("Me : " + contentToSend + "\n");
+                    if (contentToSend.equals("exit")) {
+                        messageInput.setEnabled(false);
+                    }
                     out.println(contentToSend);
                     out.flush();
                     messageInput.setText("");
                     messageInput.requestFocus();
+
+                    try {
+                        fileWriter.write("Me : " + contentToSend + "\n");
+                        fileWriter.flush();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                 }
 
             }
@@ -102,7 +109,6 @@ public class Server extends JFrame {
         JScrollPane jScrollPane = new JScrollPane(messageArea);
         this.add(jScrollPane, BorderLayout.CENTER);
         this.add(messageInput, BorderLayout.SOUTH);
-
         this.setVisible(true);
 
         //to scroll jpane
@@ -133,6 +139,17 @@ public class Server extends JFrame {
         });
     }
 
+    private void loadChatHistory() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("server_history.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                messageArea.append(line + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
+    }
 
     public  void startReading() {
         //thread-reading
@@ -142,18 +159,23 @@ public class Server extends JFrame {
                 while(true) {
                     String msg = br.readLine();
                     if (msg.equals("exit")) {
+                        messageArea.append("Client: " + msg + "\n");
                         System.out.println("Client terminated the chat");
                         JOptionPane.showMessageDialog(this, "Client Terminated the chat");
                         messageInput.setEnabled(false);
                         socket.close();
+                        out.flush();
                         break;
                     }
                     messageArea.append("Client: " + msg + "\n");
-
+                    try {
+                        fileWriter.write("Client: " + msg + "\n");
+                        fileWriter.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-
             } catch (Exception e) {
-//                    e.printStackTrace();
                 System.out.println("Connection closed");
             }
         };
