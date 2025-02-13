@@ -13,7 +13,7 @@ import java.net.Socket;
 //
 
 public class Client extends JFrame {
-    //variables
+//    variables
     Socket socket;
     BufferedReader br;
     PrintWriter out;
@@ -26,7 +26,7 @@ public class Client extends JFrame {
     private Font font2 = new Font("Roboto", Font.PLAIN, 18);
 
 
-    //constructor
+//    constructor
     public Client() {
         try {
             System.out.println("Sending Request to server");
@@ -91,7 +91,7 @@ public class Client extends JFrame {
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        //component code
+//        component code
         heading.setFont(font1);
         messageArea.setFont(font2);
         messageInput.setFont(font2);
@@ -99,17 +99,17 @@ public class Client extends JFrame {
         heading.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         messageArea.setEditable(false);
 
-        //frame layout
+//        frame layout
         this.setLayout(new BorderLayout());
 
-        //adding components to frame
+//        adding components to frame
         this.add(heading, BorderLayout.NORTH);
         JScrollPane jScrollPane = new JScrollPane(messageArea);
         this.add(jScrollPane, BorderLayout.CENTER);
         this.add(messageInput, BorderLayout.SOUTH);
         this.setVisible(true);
 
-        //to scroll jpane
+//        to scroll jpane
         messageArea.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -148,8 +148,9 @@ public class Client extends JFrame {
 
         }
     }
+
     public void startReading() {
-        //thread-reading
+//        thread-reading
         Runnable r1 = () -> {
             System.out.println("Reader started...");
             try {
