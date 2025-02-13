@@ -4,9 +4,7 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 
@@ -19,6 +17,7 @@ public class Client extends JFrame {
     Socket socket;
     BufferedReader br;
     PrintWriter out;
+    FileWriter fileWriter;
 
     private JLabel heading = new JLabel("Client Area");
     private JTextArea messageArea = new JTextArea();
@@ -33,16 +32,15 @@ public class Client extends JFrame {
             System.out.println("Sending Request to server");
 //            socket = new Socket("192.168.42.197", 2103);
             socket = new Socket(InetAddress.getLocalHost(), 2103);
-
             System.out.println("Connection Done");
-
             br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
+            fileWriter = new FileWriter("client_history.txt", true); // append mode
             out = new PrintWriter(socket.getOutputStream());
 
             createGUI();
             handleEvents();
             startReading();
+            loadChatHistory();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -67,10 +65,20 @@ public class Client extends JFrame {
                 if (e.getKeyCode() == 10) {
                     String contentToSend = messageInput.getText();
                     messageArea.append("Me : " + contentToSend + "\n");
+                    if (contentToSend.equals("exit")) {
+                        messageInput.setEnabled(false);
+                    }
                     out.println(contentToSend);
                     out.flush();
                     messageInput.setText("");
                     messageInput.requestFocus();
+
+                    try {
+                        fileWriter.write("Me: " + contentToSend + "\n");
+                        fileWriter.flush();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                    }
                 }
 
             }
@@ -99,7 +107,6 @@ public class Client extends JFrame {
         JScrollPane jScrollPane = new JScrollPane(messageArea);
         this.add(jScrollPane, BorderLayout.CENTER);
         this.add(messageInput, BorderLayout.SOUTH);
-
         this.setVisible(true);
 
         //to scroll jpane
@@ -130,6 +137,17 @@ public class Client extends JFrame {
         });
     }
 
+    private void loadChatHistory() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("client_history.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                messageArea.append(line + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
+    }
     public void startReading() {
         //thread-reading
         Runnable r1 = () -> {
@@ -138,17 +156,23 @@ public class Client extends JFrame {
                 while (true) {
                     String msg = br.readLine();
                     if (msg.equals("exit")) {
+                        messageArea.append("Server: " + msg + "\n");
                         System.out.println("Server terminated the chat");
                         JOptionPane.showMessageDialog(this, "Server Terminated the chat");
                         messageInput.setEnabled(false);
                         socket.close();
+                        out.flush();
                         break;
                     }
                     messageArea.append("Server: " + msg + "\n");
-
+                    try {
+                        fileWriter.write("Server: " + msg + "\n");
+                        fileWriter.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-            }catch (Exception e) {
-//                e.printStackTrace();
+            } catch (Exception e) {
                 System.out.println("Connection closed");
             }
         };
