@@ -22,7 +22,7 @@ public class Client extends JFrame {
     private JLabel heading = new JLabel("Client Area");
     private JTextArea messageArea = new JTextArea();
     private JTextField messageInput = new JTextField();
-    private Font font1 = new Font("Segou UI", Font.ITALIC, 22);
+    private Font font1 = new Font("Segue UI", Font.ITALIC, 22);
     private Font font2 = new Font("Roboto", Font.PLAIN, 18);
 
 
@@ -30,8 +30,8 @@ public class Client extends JFrame {
     public Client() {
         try {
             System.out.println("Sending Request to server");
-//            socket = new Socket("192.168.42.197", 2103);
-            socket = new Socket(InetAddress.getLocalHost(), 2103);
+//            socket = new Socket("192.168.77.87", 2103);
+                socket = new Socket(InetAddress.getLocalHost(), 2103);
             System.out.println("Connection Done");
             br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             fileWriter = new FileWriter("client_history.txt", true); // append mode
@@ -158,6 +158,12 @@ public class Client extends JFrame {
                     String msg = br.readLine();
                     if (msg.equals("exit")) {
                         messageArea.append("Server: " + msg + "\n");
+                        try {
+                            fileWriter.write("Server: " + msg + "\n");
+                            fileWriter.flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                         System.out.println("Server terminated the chat");
                         JOptionPane.showMessageDialog(this, "Server Terminated the chat");
                         messageInput.setEnabled(false);

@@ -21,9 +21,9 @@ public class Server extends JFrame {
     FileWriter fileWriter;
 
     private JLabel heading = new JLabel("Server Area");
-    private  JTextArea messageArea = new JTextArea();
+    private JTextArea messageArea = new JTextArea();
     private JTextField messageInput = new JTextField();
-    private Font font1 = new Font("Segou UI", Font.ITALIC, 22);
+    private Font font1 = new Font("Segue UI", Font.ITALIC, 22);
     private Font font2 = new Font("Roboto", Font.PLAIN, 18);
 
 
@@ -160,6 +160,12 @@ public class Server extends JFrame {
                     String msg = br.readLine();
                     if (msg.equals("exit")) {
                         messageArea.append("Client: " + msg + "\n");
+                        try {
+                            fileWriter.write("Client: " + msg + "\n");
+                            fileWriter.flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                         System.out.println("Client terminated the chat");
                         JOptionPane.showMessageDialog(this, "Client Terminated the chat");
                         messageInput.setEnabled(false);
