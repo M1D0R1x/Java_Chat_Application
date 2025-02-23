@@ -84,7 +84,17 @@ public class Client extends JFrame {
             public void keyTyped(KeyEvent e) {}
 
             @Override
-            public void keyPressed(KeyEvent e) {}
+            public void keyPressed(KeyEvent e) {
+//                if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
+//                    String currentText = messageInput.getText();
+//                    if (!currentText.isEmpty()) {
+//                        // Remove the last character or emoji (works for both text and Unicode emojis)
+//                        String newText = currentText.substring(0, currentText.length() - 1);
+//                        messageInput.setText(newText);
+//                        messageInput.requestFocus(); // Refocus on input field
+//                    }
+//                }
+            }
 
             @Override
             public void keyReleased(KeyEvent e) {
@@ -273,8 +283,8 @@ public class Client extends JFrame {
         JPanel emojiPanel = new JPanel(new GridLayout(0, 4, 5, 5)); // Grid layout for emojis (4 columns for better fit)
         emojiDialog.add(new JScrollPane(emojiPanel)); // Add scroll pane for many emojis
 
-        // Use a Set to track selected emojis for toggling
-        Set<String> selectedEmojis = new HashSet<>();
+        // Use a StringBuilder to accumulate all selected emojis (including duplicates)
+        StringBuilder selectedEmojis = new StringBuilder(messageInput.getText()); // Start with current input text
 
         // Define reaction emoji categories (using emoji-java Emoji objects based on names/aliases)
         List<Emoji> reactionEmojis = new ArrayList<>();
@@ -324,46 +334,34 @@ public class Client extends JFrame {
         // Status (OK, not OK)
         reactionEmojis.add(EmojiManager.getForAlias("thumbs_up")); // 👍 (OK)
         reactionEmojis.add(EmojiManager.getForAlias("thumbs_down")); // 👎 (not OK)
-        reactionEmojis.add(EmojiManager.getForAlias("check_mark_button")); // ✅ (OK)
-        reactionEmojis.add(EmojiManager.getForAlias("cross_mark")); // ❌ (not OK)
 
         // Feelings (sleepy, cold, hot, angry, very angry)
         reactionEmojis.add(EmojiManager.getForAlias("sleeping")); // 😴 (sleepy)
         reactionEmojis.add(EmojiManager.getForAlias("sleepy")); // 😪 (sleepy)
-        reactionEmojis.add(EmojiManager.getForAlias("cold_face")); // 🥶 (cold)
         reactionEmojis.add(EmojiManager.getForAlias("snowflake")); // ❄️ (cold)
-        reactionEmojis.add(EmojiManager.getForAlias("hot_face")); // 🥵 (hot)
         reactionEmojis.add(EmojiManager.getForAlias("fire")); // 🔥 (hot)
         reactionEmojis.add(EmojiManager.getForAlias("angry")); // 😠 (angry)
         reactionEmojis.add(EmojiManager.getForAlias("rage")); // 😡 (angry)
         reactionEmojis.add(EmojiManager.getForAlias("face_with_steam_from_nose")); // 😤 (very angry)
-        reactionEmojis.add(EmojiManager.getForAlias("face_with_symbols_on_mouth")); // 🤬 (very angry)
 
         // Peace (peace signs or symbols)
-        reactionEmojis.add(EmojiManager.getForAlias("victory_hand")); // ✌️ (peace)
         reactionEmojis.add(EmojiManager.getForAlias("dove")); // 🕊️ (peace)
 
-        // Add emojis to the panel with toggle functionality
+        // Add emojis to the panel with multiple selection (allowing duplicates, no toggle)
         for (Emoji emoji : reactionEmojis) {
             if (emoji != null) { // Ensure emoji exists
                 JButton emojiButton = new JButton(emoji.getUnicode()); // Use Unicode representation as button label
                 emojiButton.setFont(font2); // Use the color emoji font (e.g., Noto Color Emoji)
                 String emojiUnicode = emoji.getUnicode();
                 emojiButton.addActionListener(e -> {
-                    if (selectedEmojis.contains(emojiUnicode)) {
-                        // Remove emoji if already selected
-                        selectedEmojis.remove(emojiUnicode);
-                        String currentText = messageInput.getText();
-                        String newText = currentText.replace(emojiUnicode, ""); // Remove the emoji from input
-                        messageInput.setText(newText.trim()); // Update input, removing extra spaces
-                    } else {
-                        // Add emoji if not selected
-                        selectedEmojis.add(emojiUnicode);
-                        messageInput.setText(messageInput.getText() + emojiUnicode); // Append emoji to input
-                    }
+                    String currentText = messageInput.getText();
+                    // Allow adding the same emoji multiple times (no removal unless explicitly handled)
+                    messageInput.setText(currentText + emojiUnicode); // Append emoji to input, allowing duplicates
                     messageInput.requestFocus(); // Refocus on input field
                 });
                 emojiPanel.add(emojiButton);
+            } else {
+                System.out.println("Null emoji found for alias: " );
             }
         }
 
