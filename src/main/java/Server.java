@@ -83,20 +83,10 @@ public class Server extends JFrame {
     private void handleEvents() {
         messageInput.addKeyListener(new KeyListener() {
             @Override
-            public void keyTyped(KeyEvent e) {}
+            public void keyTyped(KeyEvent e) {} // not used
 
             @Override
-            public void keyPressed(KeyEvent e) {
-//                if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
-//                    String currentText = messageInput.getText();
-//                    if (!currentText.isEmpty()) {
-//                        // Remove the last character or emoji (works for both text and Unicode emojis)
-//                        String newText = currentText.substring(0, currentText.length() - 1);
-//                        messageInput.setText(newText);
-//                        messageInput.requestFocus(); // Refocus on input field
-//                    }
-//                }
-            }
+            public void keyPressed(KeyEvent e) {} // not used
 
             @Override
             public void keyReleased(KeyEvent e) {
