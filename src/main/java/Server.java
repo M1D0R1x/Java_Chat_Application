@@ -1,13 +1,23 @@
+import com.vdurmont.emoji.Emoji;
+import com.vdurmont.emoji.EmojiManager;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+
 
 // Server class extending JFrame to create a GUI-based chat server
 public class Server extends JFrame {
@@ -22,8 +32,8 @@ public class Server extends JFrame {
     private JTextArea messageArea = new JTextArea();
     private JTextArea messageInput = new JTextArea();
     private Font font1 = new Font("Segue UI", Font.ITALIC, 22); // Font for heading
-    private Font font2 = new Font("Noto Emoji", Font.PLAIN, 18); // Font for messages and input
-
+//    private Font font2 = new Font("Segoe UI Emoji", Font.PLAIN, 18);
+    private Font font2 = new Font("Noto Color Emoji", Font.PLAIN, 18); // Font for messages and input
     // SQLite database connection string for Server-specific database
     private static final String DB_URL = "jdbc:sqlite:server_chat.db"; // Unique database file for Server
 
@@ -169,6 +179,13 @@ public class Server extends JFrame {
         clearChatButton.addActionListener(e -> clearChatHistory()); // Call clearChatHistory on button click
         bottomPanel.add(clearChatButton, BorderLayout.WEST);        // Add button to the left of input
 
+        // Add Emoji button to the east (right) of bottom panel
+        JButton emojiButton = new JButton("Emoji");
+        emojiButton.setFont(font2);
+        emojiButton.addActionListener(e -> showEmojiPicker()); // Call showEmojiPicker on button click
+        bottomPanel.add(emojiButton, BorderLayout.EAST);       // Add button to the right of input
+
+
         this.setVisible(true);                            // Show the window
 
         // Auto-scroll to bottom when new messages are added
@@ -248,6 +265,116 @@ public class Server extends JFrame {
         } catch (SQLException e) {
             System.err.println("Error saving message: " + e.getMessage());
         }
+    }
+
+    // Method to show an emoji picker dialog
+    private void showEmojiPicker() {
+        JDialog emojiDialog = new JDialog(this, "Emoji Picker", false); // Set to non-modal (false) to allow interaction with main window
+        emojiDialog.setSize(300, 400);
+        emojiDialog.setLocationRelativeTo(this); // Center relative to the parent window
+
+        // Create a panel to hold emojis
+        JPanel emojiPanel = new JPanel(new GridLayout(0, 4, 5, 5)); // Grid layout for emojis (4 columns for better fit)
+        emojiDialog.add(new JScrollPane(emojiPanel)); // Add scroll pane for many emojis
+
+        // Use a Set to track selected emojis for toggling
+        Set<String> selectedEmojis = new HashSet<>();
+
+        // Define reaction emoji categories (using emoji-java Emoji objects based on names/aliases)
+        List<Emoji> reactionEmojis = new ArrayList<>();
+
+        // Smiles (happy or positive faces, including blush, smirk, tongue out variants)
+        reactionEmojis.add(EmojiManager.getForAlias("smile")); // 😊
+        reactionEmojis.add(EmojiManager.getForAlias("slight_smile")); // 🙂
+        reactionEmojis.add(EmojiManager.getForAlias("blush")); // 😊
+        reactionEmojis.add(EmojiManager.getForAlias("smirk")); // 😏
+        reactionEmojis.add(EmojiManager.getForAlias("stuck_out_tongue")); // 😛
+        reactionEmojis.add(EmojiManager.getForAlias("stuck_out_tongue_winking_eye")); // 😜
+        reactionEmojis.add(EmojiManager.getForAlias("stuck_out_tongue_closed_eyes")); // 😝
+        reactionEmojis.add(EmojiManager.getForAlias("money_mouth_face")); // 🤑
+
+        // Cries (sad or tearful faces, including watery eyes)
+        reactionEmojis.add(EmojiManager.getForAlias("cry")); // 😢
+        reactionEmojis.add(EmojiManager.getForAlias("sob")); // 😭
+        reactionEmojis.add(EmojiManager.getForAlias("disappointed_relieved")); // 😥 (watery eyes/sad but relieved)
+
+        // Laughs (laughing or joyful faces)
+        reactionEmojis.add(EmojiManager.getForAlias("laughing")); // 😂
+        reactionEmojis.add(EmojiManager.getForAlias("joy")); // 😄
+        reactionEmojis.add(EmojiManager.getForAlias("rolling_on_the_floor_laughing")); // 🤣
+
+        // Loves (hearts or affectionate symbols, including 100)
+        reactionEmojis.add(EmojiManager.getForAlias("heart")); // ❤️
+        reactionEmojis.add(EmojiManager.getForAlias("heart_eyes")); // 😍
+        reactionEmojis.add(EmojiManager.getForAlias("sparkling_heart")); // 💖
+        reactionEmojis.add(EmojiManager.getForAlias("two_hearts")); // 💕
+        reactionEmojis.add(EmojiManager.getForAlias("revolving_hearts")); // 💞
+        reactionEmojis.add(EmojiManager.getForAlias("growing_heart")); // 💗
+        reactionEmojis.add(EmojiManager.getForAlias("hundred_points")); // 💯
+
+        // Kisses (kissing faces or symbols)
+        reactionEmojis.add(EmojiManager.getForAlias("kissing_heart")); // 😘
+        reactionEmojis.add(EmojiManager.getForAlias("kissing")); // 😗
+        reactionEmojis.add(EmojiManager.getForAlias("kissing_smiling_eyes")); // 😙
+
+        // Hugs (hugging gestures or symbols)
+        reactionEmojis.add(EmojiManager.getForAlias("hugging_face")); // 🤗
+        reactionEmojis.add(EmojiManager.getForAlias("people_hugging")); // 🫂
+
+        // Miscellaneous (side eye, skeptical or suspicious looks)
+        reactionEmojis.add(EmojiManager.getForAlias("unamused")); // 😒 (side eye/skeptical)
+        reactionEmojis.add(EmojiManager.getForAlias("raising_hand")); // 🤨 (side eye/raising eyebrow)
+
+        // Status (OK, not OK)
+        reactionEmojis.add(EmojiManager.getForAlias("thumbs_up")); // 👍 (OK)
+        reactionEmojis.add(EmojiManager.getForAlias("thumbs_down")); // 👎 (not OK)
+        reactionEmojis.add(EmojiManager.getForAlias("check_mark_button")); // ✅ (OK)
+        reactionEmojis.add(EmojiManager.getForAlias("cross_mark")); // ❌ (not OK)
+
+        // Feelings (sleepy, cold, hot, angry, very angry)
+        reactionEmojis.add(EmojiManager.getForAlias("sleeping")); // 😴 (sleepy)
+        reactionEmojis.add(EmojiManager.getForAlias("sleepy")); // 😪 (sleepy)
+        reactionEmojis.add(EmojiManager.getForAlias("cold_face")); // 🥶 (cold)
+        reactionEmojis.add(EmojiManager.getForAlias("snowflake")); // ❄️ (cold)
+        reactionEmojis.add(EmojiManager.getForAlias("hot_face")); // 🥵 (hot)
+        reactionEmojis.add(EmojiManager.getForAlias("fire")); // 🔥 (hot)
+        reactionEmojis.add(EmojiManager.getForAlias("angry")); // 😠 (angry)
+        reactionEmojis.add(EmojiManager.getForAlias("rage")); // 😡 (angry)
+        reactionEmojis.add(EmojiManager.getForAlias("face_with_steam_from_nose")); // 😤 (very angry)
+        reactionEmojis.add(EmojiManager.getForAlias("face_with_symbols_on_mouth")); // 🤬 (very angry)
+
+        // Peace (peace signs or symbols)
+        reactionEmojis.add(EmojiManager.getForAlias("victory_hand")); // ✌️ (peace)
+        reactionEmojis.add(EmojiManager.getForAlias("dove")); // 🕊️ (peace)
+
+        // Add emojis to the panel with toggle functionality
+        for (Emoji emoji : reactionEmojis) {
+            if (emoji != null) { // Ensure emoji exists
+                JButton emojiButton = new JButton(emoji.getUnicode()); // Use Unicode representation as button label
+                emojiButton.setFont(font2); // Use the color emoji font (e.g., Noto Color Emoji)
+                String emojiUnicode = emoji.getUnicode();
+                emojiButton.addActionListener(e -> {
+                    if (selectedEmojis.contains(emojiUnicode)) {
+                        // Remove emoji if already selected
+                        selectedEmojis.remove(emojiUnicode);
+                        String currentText = messageInput.getText();
+                        String newText = currentText.replace(emojiUnicode, ""); // Remove the emoji from input
+                        messageInput.setText(newText.trim()); // Update input, removing extra spaces
+                    } else {
+                        // Add emoji if not selected
+                        selectedEmojis.add(emojiUnicode);
+                        messageInput.setText(messageInput.getText() + emojiUnicode); // Append emoji to input
+                    }
+                    messageInput.requestFocus(); // Refocus on input field
+                });
+                emojiPanel.add(emojiButton);
+            }
+        }
+
+        // Ensure the dialog stays open until the user closes it (via "X")
+        emojiDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); // Close only when "X" is clicked
+
+        emojiDialog.setVisible(true); // Show the dialog, and it stays open until closed manually
     }
 
     // Method to start reading messages from the client in a separate thread
