@@ -1,5 +1,6 @@
 package com;
 
+import com.javachat.gui.Constants;
 import com.vdurmont.emoji.Emoji;
 import com.vdurmont.emoji.EmojiManager;
 
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+import static com.javachat.gui.Constants.*;
 
 // Server class extending JFrame to create a GUI-based chat server
 public class Server extends JFrame {
@@ -26,23 +28,7 @@ public class Server extends JFrame {
     Socket socket;                 // Socket for the connected client
     BufferedReader br;             // To read messages from the client
     PrintWriter out;               // To send messages to the client
-
-    // GUI components
-    private JLabel heading = new JLabel("Server Area");
-    private JTextArea messageArea = new JTextArea();
-    private JTextArea messageInput = new JTextArea();
-    final private Font font1 = new Font("Segue UI", Font.ITALIC, 22); // Font for heading
-    final private Font font2 = new Font("Roboto UI", Font.PLAIN, 18); // Font for emojis
-    private JButton emojiButton;
-    private JButton sendFileButton;
-    private JButton clearChatButton;
-    private JDialog emojiDialog;
-
-
-    // SQLite database connection string for Server-specific database
-    private static final String DB_URL = "jdbc:sqlite:src/main/resources/server_chat.db"; // Unique database file for Server
-
-
+    
     // Constructor: Initializes the server and sets up the connection
     public Server() {
         try {
@@ -70,7 +56,7 @@ public class Server extends JFrame {
 
     // Method to initialize SQLite database and create the messages table for Server
     private void initializeDatabase() {
-        try (Connection conn = DriverManager.getConnection(DB_URL); // Connect to Server-specific database
+        try (Connection conn = DriverManager.getConnection(Constants.SDB_URL); // Connect to Server-specific database
              Statement stmt = conn.createStatement()) {            // Create a statement for SQL execution
             // SQL to create a table if it doesn’t exist
             String sql = "CREATE TABLE IF NOT EXISTS messages (" +
@@ -99,9 +85,9 @@ public class Server extends JFrame {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     String contentToSend = messageInput.getText().trim(); // Get and trim text from JTextArea
                     if (!contentToSend.isEmpty()) { // Only send non-empty messages
-                        messageArea.append("Me : " + contentToSend + "\n"); // Display locally
+                        messageArea.append("Me : " + contentToSend + "\n");
                         if (contentToSend.equals("exit")) {
-                            messageInput.setEnabled(false); // Disable input if "exit" is sent
+                            messageInput.setEnabled(false);
                             emojiButton.setEnabled(false);
                             sendFileButton.setEnabled(false);
                             clearChatButton.setEnabled(false);
@@ -110,8 +96,6 @@ public class Server extends JFrame {
                         out.flush();                // Ensure message is sent immediately
                         messageInput.setText("");   // Clear input field
                         messageInput.requestFocus(); // Refocus on input field
-
-                        // Save the sent message to the database (assuming SQLite is still used)
                         saveMessage("Me", contentToSend);
 
                         if (emojiDialog != null && emojiDialog.isVisible()) {
@@ -152,11 +136,11 @@ public class Server extends JFrame {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // Configure component styles
-        heading.setFont(font1);
-        messageArea.setFont(font2);
-        messageInput.setFont(font2);
-        heading.setHorizontalAlignment(SwingConstants.CENTER);
-        heading.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        serverHeading.setFont(Constants.font1);
+        messageArea.setFont(Constants.font2);
+        messageInput.setFont(Constants.font2);
+        serverHeading.setHorizontalAlignment(SwingConstants.CENTER);
+        serverHeading.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         messageArea.setEditable(false);       // Prevent editing of message area
 
         // Improve text wrapping for messageArea
@@ -167,7 +151,7 @@ public class Server extends JFrame {
 
         // Set layout and add components to frame
         this.setLayout(new BorderLayout());
-        this.add(heading, BorderLayout.NORTH);
+        this.add(serverHeading, BorderLayout.NORTH);
         JScrollPane jScrollPane = new JScrollPane(messageArea);
         this.add(jScrollPane, BorderLayout.CENTER);
 
@@ -188,25 +172,24 @@ public class Server extends JFrame {
 
         // Add Clear Chat button to the west (left) of bottom panel
         clearChatButton = new JButton("Clear Chat");
-        clearChatButton.setFont(font2);
+        clearChatButton.setFont(Constants.font2);
         clearChatButton.addActionListener(e -> clearChatHistory()); // Call clearChatHistory on button click
         bottomPanel.add(clearChatButton, BorderLayout.WEST);        // Add button to the left of input
 
         // Add Emoji button to the east (right) of bottom panel
         emojiButton = new JButton("Emoji");
-        emojiButton.setFont(font2);
+        emojiButton.setFont(Constants.font2);
         emojiButton.addActionListener(e -> showEmojiPicker()); // Call showEmojiPicker on button click
         bottomPanel.add(emojiButton, BorderLayout.EAST);       // Add button to the right of input
 
         // Add Send File button below input (or beside, if space allows)
         sendFileButton = new JButton("Send File");
-        sendFileButton.setFont(font2);
+        sendFileButton.setFont(Constants.font2);
         sendFileButton.addActionListener(e -> sendFile());    // Call sendFile on button click
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER)); // Use FlowLayout for multiple buttons
         buttonPanel.add(sendFileButton);
         bottomPanel.add(buttonPanel, BorderLayout.SOUTH);       // Place below input and other buttons
 
-        this.add(bottomPanel, BorderLayout.SOUTH);
         this.add(bottomPanel, BorderLayout.SOUTH);
         this.setVisible(true);                            // Show the window
 
@@ -221,9 +204,7 @@ public class Server extends JFrame {
 
             // Helper method to scroll to the bottom of the message area
             public void scrollToBottom() {
-                SwingUtilities.invokeLater(() -> {
-                    jScrollPane.getVerticalScrollBar().setValue(jScrollPane.getVerticalScrollBar().getMaximum());
-                });
+                SwingUtilities.invokeLater(() -> jScrollPane.getVerticalScrollBar().setValue(jScrollPane.getVerticalScrollBar().getMaximum()));
             }
         });
 
@@ -252,9 +233,9 @@ public class Server extends JFrame {
 
     // Method to load chat history from Server-specific database (without timestamps)
     private void loadChatHistory() {
-        try (Connection conn = DriverManager.getConnection(DB_URL); // Connect to Server-specific database
-             Statement stmt = conn.createStatement();              // Create statement
-             ResultSet rs = stmt.executeQuery("SELECT sender, message FROM messages WHERE sender IN ('Me', 'Client') ORDER BY id")) { // Query only Server-relevant messages
+        try (Connection conn = DriverManager.getConnection(Constants.SDB_URL); // Connect to Server-specific database
+             Statement statement = conn.createStatement();              // Create statement
+             ResultSet rs = statement.executeQuery("SELECT sender, message FROM messages WHERE sender IN ('Me', 'Client') ORDER BY id")) { // Query only Server-relevant messages
             while (rs.next()) { // Iterate through result set
                 // Append each message with sender to message area
                 messageArea.append(rs.getString("sender") + " : " + rs.getString("message") + "\n");
@@ -266,7 +247,7 @@ public class Server extends JFrame {
 
     // MEthod to clear chat history from Server-specific database and GUI
     private void clearChatHistory() {
-        try (Connection conn = DriverManager.getConnection(DB_URL); // Connect to the respective database
+        try (Connection conn = DriverManager.getConnection(Constants.SDB_URL); // Connect to the respective database
              Statement stmt = conn.createStatement()) {            // Create a statement for SQL execution
             String sql = "DELETE FROM messages";                   // SQL to delete all rows from messages table
             stmt.execute(sql);                                     // Execute the deletion
@@ -279,11 +260,11 @@ public class Server extends JFrame {
 
     // Method to save a message to Server-specific database
     private void saveMessage(String sender, String message) {
-        try (Connection conn = DriverManager.getConnection(DB_URL); // Connect to Server-specific database
-             PreparedStatement pstmt = conn.prepareStatement("INSERT INTO messages (sender, message) VALUES (?, ?)")) { // Prepare SQL insert
-            pstmt.setString(1, sender);    // Set sender
-            pstmt.setString(2, message);   // Set message content
-            pstmt.executeUpdate();         // Execute the insert
+        try (Connection conn = DriverManager.getConnection(Constants.SDB_URL); // Connect to Server-specific database
+             PreparedStatement preparedStatement = conn.prepareStatement("INSERT INTO messages (sender, message) VALUES (?, ?)")) { // Prepare SQL insert
+            preparedStatement.setString(1, sender);    // Set sender
+            preparedStatement.setString(2, message);   // Set message content
+            preparedStatement.executeUpdate();         // Execute the insert
         } catch (SQLException e) {
             System.err.println("Error saving message: " + e.getMessage());
         }
@@ -342,7 +323,7 @@ public class Server extends JFrame {
         for (Emoji emoji : reactionEmojis) {
             if (emoji != null) { // Ensure emoji exists
                 JButton emojiButton = new JButton(emoji.getUnicode()); // Use Unicode representation as button label
-                emojiButton.setFont(font2); // Use the color emoji font (e.g., Noto Color Emoji)
+                emojiButton.setFont(Constants.font2); // Use the color emoji font (e.g., Noto Color Emoji)
                 String emojiUnicode = emoji.getUnicode();
                 emojiButton.addActionListener(e -> {
                     String currentText = messageInput.getText();
@@ -408,24 +389,14 @@ public class Server extends JFrame {
     // Method to determine the file type based on the file extension
     private String getFileType(String filename) {
         String extension = filename.toLowerCase().substring(filename.lastIndexOf(".") + 1);
-        switch (extension) {
-            case "png":
-            case "jpg":
-            case "jpeg":
-                return "image";
-            case "pdf":
-                return "pdf";
-            case "doc":
-            case "docx":
-                return "document";
-            case "txt":
-                return "text";
-            case "zip":
-            case "rar":
-                return "archive";
-            default:
-                return "file";
-        }
+        return switch (extension) {
+            case "png", "jpg", "jpeg" -> "image";
+            case "pdf" -> "pdf";
+            case "doc", "docx" -> "document";
+            case "txt" -> "text";
+            case "zip", "rar" -> "archive";
+            default -> "file";
+        };
     }
 
     // Method to save a file to the local disk
@@ -447,14 +418,14 @@ public class Server extends JFrame {
 
     // Method to get the file extension based on the file type
     private String getExtension(String fileType) {
-        switch (fileType.toLowerCase()) {
-            case "image": return "png";
-            case "pdf": return "pdf";
-            case "document": return "docx";
-            case "text": return "txt";
-            case "archive": return "zip";
-            default: return "bin";
-        }
+        return switch (fileType.toLowerCase()) {
+            case "image" -> "png";
+            case "pdf" -> "pdf";
+            case "document" -> "docx";
+            case "text" -> "txt";
+            case "archive" -> "zip";
+            default -> "bin";
+        };
     }
 
     // Method to start reading messages from the client in a separate thread
