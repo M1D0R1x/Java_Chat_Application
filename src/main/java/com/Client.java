@@ -30,8 +30,12 @@ public class Client extends JFrame {
     private JLabel heading = new JLabel("Client Area");
     private JTextArea messageArea = new JTextArea();
     private JTextArea messageInput = new JTextArea();
-    private Font font1 = new Font("Segue UI", Font.ITALIC, 22); // Font for heading
-    private Font font2 = new Font("Noto Color Emoji", Font.PLAIN, 18); // Font for messages and input
+    final private Font font1 = new Font("Segue UI", Font.ITALIC, 22); // Font for heading
+    final private Font font2 = new Font("Roboto UI", Font.PLAIN, 18); // Font for message input and emojis
+    private JButton emojiButton;
+    private JButton sendFileButton;
+    private JButton clearChatButton;
+    private JDialog emojiDialog;
 
     // SQLite database connection string for Client-specific database
     private static final String DB_URL = "jdbc:sqlite:src/main/resources/client_chat.db";
@@ -93,6 +97,9 @@ public class Client extends JFrame {
                         messageArea.append("Me : " + contentToSend + "\n"); // Display locally
                         if (contentToSend.equals("exit")) {
                             messageInput.setEnabled(false); // Disable input if "exit" is sent
+                            emojiButton.setEnabled(false);
+                            sendFileButton.setEnabled(false);
+                            clearChatButton.setEnabled(false);
                         }
                         out.println(contentToSend); // Send message to client/server
                         out.flush();                // Ensure message is sent immediately
@@ -101,6 +108,10 @@ public class Client extends JFrame {
 
                         // Save the sent message to the database (assuming SQLite is still used)
                         saveMessage("Me", contentToSend);
+
+                        if (emojiDialog != null && emojiDialog.isVisible()) {
+                            emojiDialog.dispose();
+                        }
                     }
                 }
             }
@@ -171,26 +182,27 @@ public class Client extends JFrame {
         bottomPanel.add(inputScrollPane, BorderLayout.CENTER);
 
         // Add Clear Chat button to the west (left) of bottom panel
-        JButton clearChatButton = new JButton("Clear Chat");
+        clearChatButton = new JButton("Clear Chat");
         clearChatButton.setFont(font2);
         clearChatButton.addActionListener(e -> clearChatHistory()); // Call clearChatHistory on button click
         bottomPanel.add(clearChatButton, BorderLayout.WEST);        // Add button to the left of input
 
         // Add Emoji button to the east (right) of bottom panel
-        JButton emojiButton = new JButton("Emoji");
+        emojiButton = new JButton("Emoji");
         emojiButton.setFont(font2);
         emojiButton.addActionListener(e -> showEmojiPicker()); // Call showEmojiPicker on button click
         bottomPanel.add(emojiButton, BorderLayout.EAST);       // Add button to the right of input
 
         // Add Send File button below input (or beside, if space allows)
-        JButton sendFileButton = new JButton("Send File");
+        sendFileButton = new JButton("Send File");
         sendFileButton.setFont(font2);
         sendFileButton.addActionListener(e -> sendFile());    // Call sendFile on button click
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER)); // Use FlowLayout for multiple buttons
         buttonPanel.add(sendFileButton);
         bottomPanel.add(buttonPanel, BorderLayout.SOUTH);       // Place below input and other buttons
 
-
+        this.add(bottomPanel, BorderLayout.SOUTH);
+        this.add(bottomPanel, BorderLayout.SOUTH);
         this.setVisible(true);                           // Show the window
 
         // Auto-scroll to bottom when new messages are added
@@ -273,7 +285,11 @@ public class Client extends JFrame {
     }
     // Method to show an emoji picker dialog
     private void showEmojiPicker() {
-        JDialog emojiDialog = new JDialog(this, "Emoji Picker", false); // Set to non-modal (false) to allow interaction with main window
+        if (emojiDialog != null && emojiDialog.isVisible()) {
+            emojiDialog.dispose(); // Close existing dialog if open
+            return;
+        }
+        emojiDialog = new JDialog(this, "Emoji Picker", false); // Set to non-modal (false) to allow interaction with main window
         emojiDialog.setSize(300, 400);
         emojiDialog.setLocationRelativeTo(this); // Center relative to the parent window
 
@@ -336,7 +352,6 @@ public class Client extends JFrame {
 
         // Ensure the dialog stays open until the user closes it (via "X")
         emojiDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); // Close only when "X" is clicked
-
         emojiDialog.setVisible(true); // Show the dialog, and it stays open until closed manually
     }
 
@@ -448,6 +463,7 @@ public class Client extends JFrame {
                         System.out.println("Server terminated the chat");
                         JOptionPane.showMessageDialog(this, "Server Terminated the chat");
                         messageInput.setEnabled(false); // Disable input
+
                         socket.close();                 // Close connection
                         out.flush();                    // Flush output
                         break;
