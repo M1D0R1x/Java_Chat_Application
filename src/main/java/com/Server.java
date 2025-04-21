@@ -270,7 +270,6 @@ public class Server extends JFrame {
         }
     }
 
-    // Method to show an emoji picker dialog
     private void showEmojiPicker() {
         if (emojiDialog != null && emojiDialog.isVisible()) {
             emojiDialog.dispose(); // Close existing dialog if open
@@ -323,7 +322,7 @@ public class Server extends JFrame {
         for (Emoji emoji : reactionEmojis) {
             if (emoji != null) { // Ensure emoji exists
                 JButton emojiButton = new JButton(emoji.getUnicode()); // Use Unicode representation as button label
-                emojiButton.setFont(Constants.font2); // Use the color emoji font (e.g., Noto Color Emoji)
+                emojiButton.setFont(Constants.font2); // Use the color emoji font
                 String emojiUnicode = emoji.getUnicode();
                 emojiButton.addActionListener(e -> {
                     String currentText = messageInput.getText();
@@ -333,7 +332,7 @@ public class Server extends JFrame {
                 });
                 emojiPanel.add(emojiButton);
             } else {
-                System.out.println("Null emoji found for alias: ");
+                System.out.println("Null emoji found for alias: " );
             }
         }
 
