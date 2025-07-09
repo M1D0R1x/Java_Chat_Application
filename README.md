@@ -90,3 +90,4 @@ This section explains how to run the **Server** on one machine and the **Client*
    - Add support for multiple users to connect to the chat
 
    - Add encryption for secure communication
+   - 
